@@ -2,11 +2,12 @@
 {
     public interface IContainer
     {
-        void AddTransient<T1>();
-        void AddTransient<T, T1>();
+        void AddTransient<TImplementation>();
+        void AddTransient<TService, TImplementation>();
+        void AddInstance<TService>(TService instance);
+        void AddSingleton<TImplementation>();
+        void AddSingleton<TService, TImplementation>();
         T Resolve<T>();
-        void AddSingleton<T, T1>();
-        bool AutoResolveConcreteTypes { get; set; }
         IContainer GetNestedContainer();
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -10,11 +9,24 @@ namespace Ultimate.DI
 {
     public class Container : IContainer
     {
-        private readonly ConcurrentDictionary<Type, ImmutableList<InstanceDelivery>> types = new ConcurrentDictionary<Type, ImmutableList<InstanceDelivery>>();
-        private readonly ConcurrentDictionary<InstanceDelivery, object> singletons = new ConcurrentDictionary<InstanceDelivery, object>();
-        private readonly ConcurrentDictionary<Type, ConstructorInfo> constructors = new ConcurrentDictionary<Type, ConstructorInfo>();
+        private readonly ConcurrentDictionary<Type, ConstructorInfo> constructors;
+        private readonly ConcurrentDictionary<InstanceDelivery, object> singletons;
+        private readonly ConcurrentDictionary<Type, ImmutableList<InstanceDelivery>> types;
 
-        public bool AutoResolveConcreteTypes { get; set; }
+        public Container()
+        {
+            types = new ConcurrentDictionary<Type, ImmutableList<InstanceDelivery>>();
+            singletons = new ConcurrentDictionary<InstanceDelivery, object>();
+            constructors = new ConcurrentDictionary<Type, ConstructorInfo>();
+            AddInstance<IContainer>(this);
+        }
+
+        private Container(Container other)
+        {
+            types = new ConcurrentDictionary<Type, ImmutableList<InstanceDelivery>>(other.types);
+            singletons = new ConcurrentDictionary<InstanceDelivery, object>(other.singletons);
+            constructors = new ConcurrentDictionary<Type, ConstructorInfo>(other.constructors);
+        }
 
         public void AddTransient<TImplementation>() => AddTransient<TImplementation, TImplementation>();
         public void AddSingleton<TImplementation>() => AddSingleton<TImplementation, TImplementation>();
@@ -42,13 +54,13 @@ namespace Ultimate.DI
         }
 
         public void AddInstance<TService>(TService instance)
-        { 
+        {
             var instanceDelivery = new InstanceDelivery(LifetimeStatus.Singleton, instance.GetType()); // don't check the constructor
             singletons.AddOrUpdate(instanceDelivery, instance, (key, existing) => instance);
             Add(typeof(TService), instanceDelivery);
         }
 
-        public IContainer GetNestedContainer() => throw new NotImplementedException();
+        public IContainer GetNestedContainer() => new Container(this);
 
         public T Resolve<T>() => (T) Resolve(new Stack<Type>(), typeof(T));
 
@@ -59,14 +71,12 @@ namespace Ultimate.DI
 
             if (!types.TryGetValue(typeToLookup, out var instanceDeliveries))
             {
-                var allTypes = new[] {typeToLookup}.Concat(creating.Reverse()).ToArray();
+                var allTypes = new[] {typeToLookup}.Concat(creating).ToArray();
                 throw new ResolutionException("Resolution failed when creating the following types:" +
                                               $"{Environment.NewLine}{string.Join(Environment.NewLine, allTypes.Select(t => t.FullName))}");
             }
 
-            var resolution = isEnumerable ? 
-                CastEnumerable(instanceDeliveries.Select(c => Resolve(creating, c)), typeToLookup) : 
-                Resolve(creating, instanceDeliveries.Last());
+            var resolution = isEnumerable ? CastEnumerable(instanceDeliveries.Select(c => Resolve(creating, c)), typeToLookup) : Resolve(creating, instanceDeliveries.Last());
 
             return resolution;
         }
@@ -95,7 +105,7 @@ namespace Ultimate.DI
         {
             if (creating.Contains(instanceDelivery.Type))
             {
-                var allTypes = new[] { instanceDelivery.Type }.Concat(creating.Reverse()).ToArray();
+                var allTypes = new[] {instanceDelivery.Type}.Concat(creating).ToArray();
 
                 throw new ResolutionException("Circular reference when creating the following types:" +
                                               $"{Environment.NewLine}{string.Join(Environment.NewLine, allTypes.Select(t => t.FullName))}");
@@ -119,13 +129,11 @@ namespace Ultimate.DI
                 }
                 catch (Exception e)
                 {
-                    var allTypes = creating.Reverse().ToArray(); //already got the type we're trying to create in the stack
+                    var allTypes = creating.ToArray(); //already got the type we're trying to create in the stack
                     throw new ResolutionException("Resolution failed when creating the following types:" +
                                                   $"{Environment.NewLine}{string.Join(Environment.NewLine, allTypes.Select(t => t.FullName))}",
                         e);
                 }
-
-
             }
             finally
             {
@@ -139,11 +147,8 @@ namespace Ultimate.DI
             if (defaultConstructor != null) return defaultConstructor;
 
             var allConstructors = t.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
-            if (allConstructors.Length != 1)
-            {
-                throw new RegistrationException($"Type must have exactly one public constructor: {t.FullName}");
-            }
-            
+            if (allConstructors.Length != 1) throw new RegistrationException($"Type must have exactly one public constructor: {t.FullName}");
+
             return allConstructors.Single();
         }
     }

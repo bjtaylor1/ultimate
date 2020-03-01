@@ -1,8 +1,9 @@
+using System.Reflection.PortableExecutable;
 using Xunit;
 
 namespace Ultimate.DI.Tests
 {
-    public class ResolutionTests
+    public class Resolution
     {
         [Fact]
         public void SimpleResolution()
@@ -25,6 +26,15 @@ namespace Ultimate.DI.Tests
             var cTyped = Assert.IsType<Consumer>(c);
             Assert.NotNull(cTyped.Dependency);
             Assert.IsType<Dependency>(cTyped.Dependency);
+        }
+
+        [Fact]
+        public void RegistersItself()
+        {
+            var container = new Container();
+            var c = container.Resolve<IContainer>();
+            Assert.NotNull(c);
+            Assert.Same(container, c);
         }
     }
 

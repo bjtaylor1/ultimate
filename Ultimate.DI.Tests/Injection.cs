@@ -8,6 +8,7 @@ namespace Ultimate.DI.Tests
         public void InjectTemporaryDependency()
         {
             var container = new Container();
+
             container.AddTransient<TemporaryConsumer>();
             container.AddTransient<IDependency, Dependency>();
 
