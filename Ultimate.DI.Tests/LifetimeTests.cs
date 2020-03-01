@@ -43,7 +43,7 @@ namespace Ultimate.DI.Tests
         public void ResolveInstance()
         {
             var container = new Container();
-            var instance = new Singleton(new Dependency());
+            var instance = new SingletonWithDependency(new Dependency());
             container.AddInstance<ISingleton>(instance);
             var s = container.Resolve<ISingleton>();
             Assert.Same(instance, s);
@@ -67,9 +67,12 @@ namespace Ultimate.DI.Tests
 
     public class Singleton : ISingleton
     {
+    }
+    public class SingletonWithDependency : ISingleton
+    {
         public IDependency Dependency { get; }
 
-        public Singleton(IDependency dependency)
+        public SingletonWithDependency(IDependency dependency)
         {
             Dependency = dependency;
         }
