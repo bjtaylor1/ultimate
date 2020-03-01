@@ -35,7 +35,31 @@ namespace Ultimate.DI.Tests
             output.WriteLine(ex.Message);
         }
 
+        [Fact]
+        public void NotCircularButComplex()
+        {
+            // CxA---CxB  
+            //  | \ /  \
+            //  | CxC--CxD
+            //  |   \  /
+            //  |----CxE
+            var container = new Container();
+            container.AddTransient<CxA>();
+            container.AddTransient<CxB>();
+            container.AddTransient<CxC>();
+            container.AddTransient<CxD>();
+            container.AddTransient<CxE>();
+            var a = container.Resolve<CxA>();
+            Assert.NotNull(a);
+            Assert.IsType<CxA>(a);
+        }
     }
+
+    public class CxA { public CxA(CxB b, CxC c, CxE e){}}
+    public class CxB { public CxB(CxC c, CxD d){}}
+    public class CxC { public CxC(CxD d, CxE e){}}
+    public class CxD { public CxD(CxE e) {}}
+    public class CxE { }
 
     public class C1
     {
