@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Ultimate.DI
 {
-    public class ResolutionException : Exception
+    public class ResolutionException : UltimateDiException
     {
         public ResolutionException(string message) : base(message)
         {
