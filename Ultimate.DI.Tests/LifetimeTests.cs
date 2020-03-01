@@ -38,6 +38,16 @@ namespace Ultimate.DI.Tests
             Assert.NotSame(s1, s2);
             Assert.Same(s1.Singleton, s2.Singleton);
         }
+
+        [Fact]
+        public void ResolveInstance()
+        {
+            var container = new Container();
+            var instance = new Singleton(new Dependency());
+            container.AddInstance<ISingleton>(instance);
+            var s = container.Resolve<ISingleton>();
+            Assert.Same(instance, s);
+        }
     }
 
     public class DependsOnSingleton : IDependsOnSingleton

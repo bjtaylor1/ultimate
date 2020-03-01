@@ -21,13 +21,33 @@ namespace Ultimate.DI.Tests
             var container = new Container();
             Assert.Throws<RegistrationException>(() => container.AddTransient<IDependency, TooManyConstructors>());
             Assert.Throws<RegistrationException>(() => container.AddTransient<TooManyConstructors>());
+            Assert.Throws<RegistrationException>(() => container.AddSingleton<TooManyConstructors>());
+
+        }
+
+        [Fact]
+        public void InstanceWithTooManyConstructors() // should be allowed if we're constructing it manually
+        {
+            var container = new Container();
+            var instance = new TooManyConstructors(new C1(null));
+            container.AddInstance(instance);
+            var s = container.Resolve<TooManyConstructors>();
+            Assert.NotNull(s);
+            Assert.Same(instance,s);
         }
 
         [Fact]
         public void OneConstructor()
         {
             var container = new Container();
-            container.AddTransient<OneConstructor>()
+            container.AddTransient<OneConstructor>();
+        }
+
+        [Fact]
+        public void Abstract()
+        {
+            var container = new Container();
+            Assert.Throws<RegistrationException>(() => container.AddTransient<IDependency, DependencyBase>());
         }
     }
 
@@ -56,5 +76,10 @@ namespace Ultimate.DI.Tests
         {
 
         }
+    }
+
+    public abstract class DependencyBase : IDependency
+    {
+
     }
 }

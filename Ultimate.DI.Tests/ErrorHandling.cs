@@ -14,6 +14,13 @@ namespace Ultimate.DI.Tests
         }
 
         [Fact]
+        public void NotRegistered()
+        {
+            var container = new Container();
+            Assert.Throws<ResolutionException>(() => container.Resolve<Dependency>());
+        }
+
+        [Fact]
         public void ConstructorException()
         {
             var container = new Container();
@@ -33,6 +40,12 @@ namespace Ultimate.DI.Tests
             container.AddTransient<Circular3>();
             var ex = Assert.Throws<ResolutionException>(() => container.Resolve<Circular1>());
             output.WriteLine(ex.Message);
+        }
+
+        [Fact]
+        public void CircularReferenceIfInstancesProvided()
+        {
+
         }
 
         [Fact]
