@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -63,9 +64,18 @@ namespace Ultimate.DI
                                               $"{Environment.NewLine}{string.Join(Environment.NewLine, allTypes.Select(t => t.FullName))}");
             }
 
-            var resolution = isEnumerable ? instanceDeliveries.Select(c => Resolve(creating, c)) : Resolve(creating, instanceDeliveries.Last());
+            var resolution = isEnumerable ? 
+                CastEnumerable(instanceDeliveries.Select(c => Resolve(creating, c)), typeToLookup) : 
+                Resolve(creating, instanceDeliveries.Last());
 
             return resolution;
+        }
+
+        private object CastEnumerable(IEnumerable<object> enumerable, Type elementType)
+        {
+            var castMethod = typeof(Enumerable).GetMethod(nameof(Enumerable.Cast))?.MakeGenericMethod(elementType);
+            var retval = castMethod?.Invoke(null, new object[] {enumerable});
+            return retval;
         }
 
         private object Resolve(Stack<Type> creating, InstanceDelivery instanceDelivery)
