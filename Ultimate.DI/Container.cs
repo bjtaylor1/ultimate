@@ -125,12 +125,15 @@ namespace Ultimate.DI
 
         private static ConstructorInfo GetConstructor(Type t)
         {
-            var allConstructors = t.GetConstructors(BindingFlags.Public);
+            var defaultConstructor = t.GetConstructor(Type.EmptyTypes);
+            if (defaultConstructor != null) return defaultConstructor;
+
+            var allConstructors = t.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
             if (allConstructors.Length != 1)
             {
                 throw new RegistrationException($"Type must have exactly one public constructor: {t.FullName}");
             }
-
+            
             return allConstructors.Single();
         }
     }
