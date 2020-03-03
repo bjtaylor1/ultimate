@@ -6,13 +6,6 @@ namespace Ultimate.DI.Tests
 {
     public class ErrorHandling
     {
-        private readonly ITestOutputHelper output;
-
-        public ErrorHandling(ITestOutputHelper output)
-        {
-            this.output = output;
-        }
-
         [Fact]
         public void NotRegistered()
         {
@@ -28,7 +21,10 @@ namespace Ultimate.DI.Tests
             container.AddTransient<C2>();
             container.AddTransient<ExceptionInConstructor>();
             var ex = Assert.Throws<ResolutionException>(() => container.Resolve<C1>());
-            output.WriteLine(ex.Message);
+            Assert.Contains(@"
+Ultimate.DI.Tests.ExceptionInConstructor
+Ultimate.DI.Tests.C2
+Ultimate.DI.Tests.C1", ex.Message);
         }
 
         [Fact]
@@ -39,13 +35,26 @@ namespace Ultimate.DI.Tests
             container.AddTransient<Circular2>();
             container.AddTransient<Circular3>();
             var ex = Assert.Throws<ResolutionException>(() => container.Resolve<Circular1>());
-            output.WriteLine(ex.Message);
+            Assert.Contains(@"Circular reference when creating the following types:
+Ultimate.DI.Tests.Circular1
+Ultimate.DI.Tests.Circular3
+Ultimate.DI.Tests.Circular2
+Ultimate.DI.Tests.Circular1", ex.Message);
         }
 
         [Fact]
         public void CircularReferenceIfInstancesProvided()
         {
-
+            var container = new Container();
+            var c3 = new Circular3(null);
+            var c2 = new Circular2(c3);
+            var c1 = new Circular1(c2);
+            container.AddInstance(c1);
+            container.AddInstance(c2);
+            container.AddInstance(c3);
+            Assert.Same(c1, container.Resolve<Circular1>());
+            Assert.Same(c2, container.Resolve<Circular2>());
+            Assert.Same(c3, container.Resolve<Circular3>());
         }
 
         [Fact]
