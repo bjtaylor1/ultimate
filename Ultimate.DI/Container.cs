@@ -55,7 +55,7 @@ namespace Ultimate.DI
 
         public void AddInstance<TService>(TService instance)
         {
-            var instanceDelivery = new InstanceDelivery(LifetimeStatus.Singleton, instance.GetType()); // don't check the constructor
+            var instanceDelivery = new InstanceDelivery(LifetimeStatus.Singleton, instance?.GetType()); // don't check the constructor
             singletons.AddOrUpdate(instanceDelivery, instance, (key, existing) => instance);
             Add(typeof(TService), instanceDelivery);
         }

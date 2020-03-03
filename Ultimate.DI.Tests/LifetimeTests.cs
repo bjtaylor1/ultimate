@@ -48,6 +48,15 @@ namespace Ultimate.DI.Tests
             var s = container.Resolve<ISingleton>();
             Assert.Same(instance, s);
         }
+
+        [Fact]
+        public void CanResolveNull()
+        {
+            var container = new Container();
+            container.AddInstance<ISingleton>(null);
+            var s = container.Resolve<ISingleton>();
+            Assert.Null(s);
+        }
     }
 
     public class DependsOnSingleton : IDependsOnSingleton
