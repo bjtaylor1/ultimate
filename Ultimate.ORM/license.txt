@@ -1,0 +1,5 @@
+This software is open source, and is provided without any guarantees of being suitable for a particular purpose.
+
+The creator reserves the right to make breaking changes in future versions.
+The creator undertakes no obligation to maintain it or implement particular features.
+Use at your own risk.
