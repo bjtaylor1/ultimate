@@ -12,6 +12,7 @@ namespace Ultimate.DI
         private readonly ConcurrentDictionary<Type, ConstructorInfo> constructors;
         private readonly ConcurrentDictionary<InstanceDelivery, object> singletons;
         private readonly ConcurrentDictionary<Type, ImmutableList<InstanceDelivery>> types;
+        private readonly Guid id = Guid.NewGuid();
 
         public Container()
         {

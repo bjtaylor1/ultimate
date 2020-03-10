@@ -1,0 +1,109 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+
+namespace Ultimate.ORM
+{
+    public class ObjectMapper : IObjectMapper
+    {
+        public async Task<T> ToSingleObject<T>(DbCommand command) where T : new()
+        {
+            using var reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SingleResult);
+            PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var ordinalMap = GetOrdinalMap(properties, reader);
+            if (await reader.ReadAsync())
+            {
+                T t = ObjectFromReader<T>(reader, properties, ordinalMap);
+                return t;
+            }
+            else throw new InvalidOperationException("The command did not return any records");
+        }
+
+        public async Task<List<T>> ToMultipleObjects<T>(DbCommand command) where T : new()
+        {
+            using var reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SingleResult);
+            PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var ordinalMap = GetOrdinalMap(properties, reader);
+            var returnValue = new List<T>();
+            while (await reader.ReadAsync())
+            {
+                T t = ObjectFromReader<T>(reader, properties, ordinalMap);
+                returnValue.Add(t);
+            }
+            return returnValue;
+        }
+
+        private static T ObjectFromReader<T>(DbDataReader reader, PropertyInfo[] properties, Dictionary<PropertyInfo, int> ordinalMap) where T : new()
+        {
+            var t = new T();
+            foreach (var prop in properties)
+            {
+                var rawVal = reader[ordinalMap[prop]];
+                prop.SetValue(t, ConvertValue(rawVal, prop.PropertyType));
+            }
+            return t;
+        }
+
+        private Dictionary<PropertyInfo, int> GetOrdinalMap(PropertyInfo[] properties, DbDataReader reader)
+        {
+            var unsatisfiedProperties = new List<string>();
+            var returnValue = new Dictionary<PropertyInfo, int>();
+            foreach(var prop in properties)
+            {
+                try
+                {
+                    returnValue.Add(prop, reader.GetOrdinal(prop.Name));
+                }
+                catch(IndexOutOfRangeException)
+                {
+                    unsatisfiedProperties.Add(prop.Name);
+                }
+            }
+            if(unsatisfiedProperties.Any())
+            {
+                var propList = string.Join(Environment.NewLine, unsatisfiedProperties);
+                throw new InvalidOperationException($"The following properties were not satisfied:{Environment.NewLine}{propList}");
+            }
+            return returnValue;
+        }
+
+        private static object ConvertValue(object rawVal, Type propertyType)
+        {
+            object returnValue;
+            if(rawVal == null || DBNull.Value.Equals(rawVal))
+            {
+                returnValue = null;
+            }
+            else if(propertyType.IsEnum)
+            {
+                if (rawVal is string stringVal)
+                {
+                    returnValue = Enum.Parse(propertyType, stringVal);
+                }
+                else if (rawVal is int intVal)
+                {
+                    returnValue = Enum.ToObject(propertyType, intVal);
+                }
+                else throw new InvalidOperationException($"Attempt to convert value of type {rawVal.GetType()} to enum {propertyType} failed. Must be a string or int.");
+            }
+            else
+            {
+                Type typeToConvertTo;
+                if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                {
+                    typeToConvertTo = propertyType.GetGenericArguments().Single();
+                }
+                else
+                {
+                    typeToConvertTo = propertyType;
+                }
+                returnValue = Convert.ChangeType(rawVal, typeToConvertTo);
+            }
+
+            return returnValue;
+        }
+    }
+}
