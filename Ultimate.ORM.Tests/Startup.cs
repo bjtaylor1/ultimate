@@ -2,7 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
-using System.Data.SqlClient;
+using System.Data.SQLite;
+using System.IO;
 using System.Reflection;
 using Xunit;
 using Xunit.Abstractions;
@@ -25,8 +26,11 @@ namespace Ultimate.ORM.Tests
         {
             services.AddSingleton(p =>
             {
-                var connection = new SqlConnection(GetConnectionString(p));
+                var connection = new SQLiteConnection(GetConnectionString(p));
+                var initializeSql = File.ReadAllText("CreateData.sql");
+                using var cmd = new SQLiteCommand(initializeSql, connection);
                 connection.Open();
+                cmd.ExecuteNonQuery();
                 return connection;
             });
         }

@@ -4,6 +4,8 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <PackageLicenseFile>license.txt</PackageLicenseFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/bjtaylor1/ultimate</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/bjtaylor1/ultimate</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

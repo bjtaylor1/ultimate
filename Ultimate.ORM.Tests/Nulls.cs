@@ -1,4 +1,4 @@
-﻿using System.Data.SqlClient;
+﻿using System.Data.SQLite;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -6,9 +6,9 @@ namespace Ultimate.ORM.Tests
 {
     public class Nulls
     {
-        private readonly SqlConnection connection;
+        private readonly SQLiteConnection connection;
 
-        public Nulls(SqlConnection connection)
+        public Nulls(SQLiteConnection connection)
         {
             this.connection = connection;
         }
@@ -16,7 +16,7 @@ namespace Ultimate.ORM.Tests
         [Fact]
         public async Task GetObjectWithNulls()
         {
-            await using var command = new SqlCommand(@"
+            await using var command = new SQLiteCommand(@"
                 select Id, IntVal, BigIntVal, StringVal, EnumStringVal as EnumVal, FloatVal, DecimalVal, DateTimeVal
                 from TestORMData
                 where id  = 3", connection);

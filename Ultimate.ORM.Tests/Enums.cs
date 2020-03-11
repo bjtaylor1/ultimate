@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.SQLite;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -8,9 +8,9 @@ namespace Ultimate.ORM.Tests
 {
     public class Enums
     {
-        private readonly SqlConnection connection;
+        private readonly SQLiteConnection connection;
 
-        public Enums(SqlConnection connection)
+        public Enums(SQLiteConnection connection)
         {
             this.connection = connection;
             if(this.connection.State == ConnectionState.Closed)
@@ -24,7 +24,7 @@ namespace Ultimate.ORM.Tests
         [InlineData("EnumIntVal")]
         public async Task EnumFromString(string enumExpression)
         {
-            await using var command = new SqlCommand($"select {enumExpression} as EnumVal from TestORMData where Id = 1", connection);
+            await using var command = new SQLiteCommand($"select {enumExpression} as EnumVal from TestORMData where Id = 1", connection);
             var objectMapper = new ObjectMapper();
             var obj = await objectMapper.ToSingleObject<TestObject>(command);
             Assert.NotNull(obj);

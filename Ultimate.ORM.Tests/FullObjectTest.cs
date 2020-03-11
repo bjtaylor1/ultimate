@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.SQLite;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -10,9 +11,9 @@ namespace Ultimate.ORM.Tests
 {
     public class FullObjectTest
     {
-        private readonly SqlConnection connection;
+        private readonly SQLiteConnection connection;
 
-        public FullObjectTest(SqlConnection connection)
+        public FullObjectTest(SQLiteConnection connection)
         {
             this.connection = connection;
         }
@@ -20,7 +21,7 @@ namespace Ultimate.ORM.Tests
         [Fact]
         public async Task GetFullObject()
         {
-            await using var command = new SqlCommand(@"
+            await using var command = new SQLiteCommand(@"
                 select IntVal, BigIntVal, StringVal, EnumStringVal as EnumVal, FloatVal, DecimalVal, DateTimeVal
                 from TestORMData
                 where Id = 1", connection);

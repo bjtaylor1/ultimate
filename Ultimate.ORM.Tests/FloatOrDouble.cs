@@ -1,4 +1,4 @@
-﻿using System.Data.SqlClient;
+﻿using System.Data.SQLite;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -6,9 +6,9 @@ namespace Ultimate.ORM.Tests
 {
     public class FloatOrDouble
     {
-        private readonly SqlConnection connection;
+        private readonly SQLiteConnection connection;
 
-        public FloatOrDouble(SqlConnection connection)
+        public FloatOrDouble(SQLiteConnection connection)
         {
             this.connection = connection;
         }
@@ -16,7 +16,7 @@ namespace Ultimate.ORM.Tests
         [Fact]
         public async Task CanParseToFloat()
         {
-            await using var command = new SqlCommand(@"
+            await using var command = new SQLiteCommand(@"
                 select FloatVal
                 from TestORMData
                 where Id = 1", connection);
@@ -28,7 +28,7 @@ namespace Ultimate.ORM.Tests
         [Fact]
         public async Task CanParseToDouble()
         {
-            await using var command = new SqlCommand(@"
+            await using var command = new SQLiteCommand(@"
                 select FloatVal
                 from TestORMData
                 where Id = 1", connection);

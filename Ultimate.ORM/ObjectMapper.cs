@@ -41,8 +41,19 @@ namespace Ultimate.ORM
             var t = new T();
             foreach (var prop in properties)
             {
-                var rawVal = reader[ordinalMap[prop]];
-                prop.SetValue(t, ConvertValue(rawVal, prop.PropertyType));
+                int ordinal = ordinalMap[prop];
+                object valToSet;
+                if (prop.PropertyType == typeof(long))
+                {
+                    valToSet = reader.GetInt64(ordinal);
+                }
+                else
+                {
+                    var rawVal = reader[ordinal];
+                    valToSet = ConvertValue(rawVal, prop.PropertyType);
+                }
+                
+                prop.SetValue(t, valToSet);
             }
             return t;
         }
@@ -55,7 +66,15 @@ namespace Ultimate.ORM
             {
                 try
                 {
-                    returnValue.Add(prop, reader.GetOrdinal(prop.Name));
+                    int ordinal = reader.GetOrdinal(prop.Name);
+                    if (ordinal == -1)
+                    {
+                        unsatisfiedProperties.Add(prop.Name);
+                    }
+                    else
+                    {
+                        returnValue.Add(prop, ordinal);
+                    }
                 }
                 catch(IndexOutOfRangeException)
                 {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.SQLite;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -10,9 +10,9 @@ namespace Ultimate.ORM.Tests
 {
     public class MultipleObjects
     {
-        private readonly SqlConnection connection;
+        private readonly SQLiteConnection connection;
 
-        public MultipleObjects(SqlConnection connection)
+        public MultipleObjects(SQLiteConnection connection)
         {
             this.connection = connection;
         }
@@ -20,7 +20,7 @@ namespace Ultimate.ORM.Tests
         [Fact]
         public async Task GetMultipleObjects()
         {
-            await using var command = new SqlCommand(@"
+            await using var command = new SQLiteCommand(@"
                 select IntVal, BigIntVal, StringVal, EnumStringVal as EnumVal, FloatVal, DecimalVal, DateTimeVal
                 from TestORMData
                 where id in (1,2)", connection);
