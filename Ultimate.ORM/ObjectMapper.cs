@@ -3,18 +3,19 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ultimate.ORM
 {
     public class ObjectMapper : IObjectMapper
     {
-        public async Task<T> ToSingleObject<T>(DbCommand command) where T : new()
+        public async Task<T> ToSingleObject<T>(DbCommand command, CancellationToken ct = default) where T : new()
         {
-            using var reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SingleResult);
+            using var reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SingleResult, ct);
             PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
             var ordinalMap = GetOrdinalMap(properties, reader);
-            if (await reader.ReadAsync())
+            if (await reader.ReadAsync(ct))
             {
                 T t = ObjectFromReader<T>(reader, properties, ordinalMap);
                 return t;
@@ -22,13 +23,13 @@ namespace Ultimate.ORM
             else throw new InvalidOperationException("The command did not return any records");
         }
 
-        public async Task<List<T>> ToMultipleObjects<T>(DbCommand command) where T : new()
+        public async Task<List<T>> ToMultipleObjects<T>(DbCommand command, CancellationToken ct = default) where T : new()
         {
-            using var reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SingleResult);
+            using var reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SingleResult, ct);
             PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
             var ordinalMap = GetOrdinalMap(properties, reader);
             var returnValue = new List<T>();
-            while (await reader.ReadAsync())
+            while (await reader.ReadAsync(ct))
             {
                 T t = ObjectFromReader<T>(reader, properties, ordinalMap);
                 returnValue.Add(t);
