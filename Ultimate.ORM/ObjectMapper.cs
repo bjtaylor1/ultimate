@@ -25,7 +25,12 @@ namespace Ultimate.ORM
 
         public async Task<List<T>> ToMultipleObjects<T>(DbCommand command, CancellationToken ct = default) where T : new()
         {
-            using var reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SingleResult, ct);
+            await using var reader = await command.ExecuteReaderAsync(ct);
+            return await ToMultipleObjects<T>(reader, ct);
+        }
+
+        public async Task<List<T>> ToMultipleObjects<T>(DbDataReader reader, CancellationToken ct = default) where T : new()
+        {
             PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
             var ordinalMap = GetOrdinalMap(properties, reader);
             var returnValue = new List<T>();
