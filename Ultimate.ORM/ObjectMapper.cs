@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
@@ -10,9 +11,16 @@ namespace Ultimate.ORM
 {
     public class ObjectMapper : IObjectMapper
     {
+        private ConcurrentDictionary<Type, MethodInfo> tryParseMethods = new ConcurrentDictionary<Type, MethodInfo>();
+        
         public async Task<T> ToSingleObject<T>(DbCommand command, CancellationToken ct = default) where T : new()
         {
             using var reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SingleResult, ct);
+            return await ToSingleObject<T>(reader, ct);
+        }
+
+        public async Task<T> ToSingleObject<T>(DbDataReader reader, CancellationToken ct) where T : new()
+        {
             PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
             var ordinalMap = GetOrdinalMap(properties, reader);
             if (await reader.ReadAsync(ct))
@@ -42,7 +50,7 @@ namespace Ultimate.ORM
             return returnValue;
         }
 
-        private static T ObjectFromReader<T>(DbDataReader reader, PropertyInfo[] properties, Dictionary<PropertyInfo, int> ordinalMap) where T : new()
+        private T ObjectFromReader<T>(DbDataReader reader, PropertyInfo[] properties, Dictionary<PropertyInfo, int> ordinalMap) where T : new()
         {
             var t = new T();
             foreach (var prop in properties)
@@ -95,7 +103,7 @@ namespace Ultimate.ORM
             return returnValue;
         }
 
-        private static object ConvertValue(object rawVal, Type propertyType)
+        public object ConvertValue(object rawVal, Type propertyType)
         {
             object returnValue;
             if(rawVal == null || DBNull.Value.Equals(rawVal))
@@ -125,10 +133,35 @@ namespace Ultimate.ORM
                 {
                     typeToConvertTo = propertyType;
                 }
-                returnValue = Convert.ChangeType(rawVal, typeToConvertTo);
+                
+                returnValue = TryParse(rawVal, typeToConvertTo, out var parsedObject)
+                    ? parsedObject : Convert.ChangeType(rawVal, typeToConvertTo);
             }
 
             return returnValue;
+        }
+
+        private bool TryParse(object rawVal, Type type, out object parsedObject)
+        {
+            parsedObject = null;
+            if(rawVal == null)
+            {
+                return false;
+            }
+            
+            // has it got a tryParse method?
+            var tryParseMethod = tryParseMethods.GetOrAdd(type, t => t.GetMethod("TryParse", 0, new [] {rawVal.GetType(), type.MakeByRefType()} ));
+            if(tryParseMethod != null)
+            {
+                var methodParams = new object [] {rawVal, parsedObject};
+                var retVal = (bool)tryParseMethod.Invoke(null, methodParams);
+                parsedObject = methodParams[1];
+                return retVal;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }
