@@ -11,11 +11,21 @@ namespace Ultimate.ORM
 {
     public class ObjectMapper : IObjectMapper
     {
+        public ObjectMapper() : this(new CommandExecutor())
+        {
+
+        }
+        public ObjectMapper(CommandExecutor commandExecutor)
+        {
+            this.commandExecutor = commandExecutor;
+        }
+
         private ConcurrentDictionary<Type, MethodInfo> tryParseMethods = new ConcurrentDictionary<Type, MethodInfo>();
-        
+        private readonly CommandExecutor commandExecutor;
+
         public async Task<T> ToSingleObject<T>(DbCommand command, CancellationToken ct = default) where T : new()
         {
-            using var reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SingleResult, ct);
+            using var reader = await commandExecutor.ExecuteReaderAsync(command, System.Data.CommandBehavior.SingleResult, ct);
             return await ToSingleObject<T>(reader, ct);
         }
 
@@ -33,7 +43,7 @@ namespace Ultimate.ORM
 
         public async Task<List<T>> ToMultipleObjects<T>(DbCommand command, CancellationToken ct = default) where T : new()
         {
-            await using var reader = await command.ExecuteReaderAsync(ct);
+            await using var reader = await commandExecutor.ExecuteReaderAsync(command, ct);
             return await ToMultipleObjects<T>(reader, ct);
         }
 

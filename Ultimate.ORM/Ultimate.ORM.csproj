@@ -1,10 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <PackageLicenseFile>license.txt</PackageLicenseFile>
-    <PackageVersion>1.4.7</PackageVersion>
+    <PackageVersion>1.4.8</PackageVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/bjtaylor1/ultimate</PackageProjectUrl>
     <RepositoryUrl>https://github.com/bjtaylor1/ultimate</RepositoryUrl>
